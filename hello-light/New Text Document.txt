@@ -1,0 +1,218 @@
+
+import java.io.*;
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.*;
+
+
+public class TextEditor extends JFrame implements ActionListener {
+
+
+ 
+   public static void main(String[] args) {
+      JFrame window = new TextEditor();
+      window.setVisible(true);
+   }
+
+
+   private JTextArea text;  
+   
+   private JFileChooser fileDialog;  
+   
+   private File editFile;
+
+private JButton boldMenu;
+
+private JButton italicMenu;
+
+
+
+   
+   public TextEditor() {
+      super("Text Editor"); 
+      setJMenuBar( makeMenus() );
+      text = new JTextArea(25,50);
+      text.setMargin( new Insets(3,5,0,0) ); 
+      JScrollPane scroller = new JScrollPane(text);
+      setContentPane(scroller);
+      setDefaultCloseOperation(EXIT_ON_CLOSE);
+      pack();
+      setLocation(50,50);
+   }
+
+
+   
+   private JMenuBar makeMenus() {
+
+      ActionListener listener = new ActionListener() {
+          
+         public void actionPerformed(ActionEvent evt) {
+               
+            String file = evt.getActionCommand();
+            if (file.equals("New"))
+               doNew();
+            else if (file.equals("Open..."))
+               doOpen();
+            else if (file.equals("Save..."))
+               doSave();
+            else if (file.equals("Quit"))
+               doQuit();
+         }
+      };
+
+      JMenu fileMenu = new JMenu("File");
+     
+      JMenuItem newfile = new JMenuItem("New");
+      newfile.addActionListener(listener);
+      fileMenu.add(newfile);
+      
+      JMenuItem openfile = new JMenuItem("Open...");
+      openfile.addActionListener(listener);
+      fileMenu.add(openfile);
+      
+      JMenuItem savefile = new JMenuItem("Save...");
+      savefile.addActionListener(listener);
+      fileMenu.add(savefile);
+      
+      fileMenu.addSeparator();
+      
+      JMenuItem quitfile = new JMenuItem("Quit");
+      quitfile.addActionListener(listener);
+      fileMenu.add(quitfile);
+
+       boldMenu = new JButton("B");
+      italicMenu = new JButton("I");
+      boldMenu.addActionListener(this);
+      italicMenu.addActionListener(this);
+      
+      JMenuBar bar = new JMenuBar();
+      bar.add(fileMenu);
+      bar.add(boldMenu);
+      bar.add(italicMenu);
+     
+
+      return bar;
+
+   } 
+
+
+   private void doNew() {
+      text.setText("");
+      editFile = null;
+      setTitle("TextEditor");
+   }
+
+
+   private void doSave() {
+      if (fileDialog == null)      
+         fileDialog = new JFileChooser(); 
+      File selectedFile; 
+      if (editFile == null)
+         selectedFile = new File("filename.txt");
+      else
+         selectedFile = new File(editFile.getName());
+      fileDialog.setSelectedFile(selectedFile); 
+      fileDialog.setDialogTitle("Select File to be Saved");
+      int option = fileDialog.showSaveDialog(this);
+      if (option != JFileChooser.APPROVE_OPTION)
+         return;  
+      selectedFile = fileDialog.getSelectedFile();
+      if (selectedFile.exists()) {  
+         int response = JOptionPane.showConfirmDialog( this,
+               "The file \"" + selectedFile.getName()
+               + "\" file name already exists.\nDo you want to replace it?", 
+               "Confirm Save",
+               JOptionPane.YES_NO_OPTION, 
+               JOptionPane.WARNING_MESSAGE );
+         if (response != JOptionPane.YES_OPTION)
+            return;  
+      }
+      PrintWriter out; 
+      try {
+         FileWriter stream = new FileWriter(selectedFile); 
+         out = new PrintWriter( stream );
+      }
+      catch (Exception e) {
+         JOptionPane.showMessageDialog(this,
+            "an error occurred while trying to open the file:\n" + e);
+         return;
+      }
+      try {
+         out.print(text.getText());  
+         out.close();
+         if (out.checkError())  
+            throw new IOException("Error check failed.");
+         editFile = selectedFile;
+         setTitle("TextEditor: " + editFile.getName());
+      }
+      catch (Exception e) {
+         JOptionPane.showMessageDialog(this,
+            "an error occurred while trying to write the text:\n" + e);
+      }   
+   }
+   
+   
+   
+   public void doOpen() {
+      if (fileDialog == null)
+         fileDialog = new JFileChooser();
+      fileDialog.setDialogTitle("Select File to be Opened");
+      fileDialog.setSelectedFile(null); 
+      int option = fileDialog.showOpenDialog(this);
+      if (option != JFileChooser.APPROVE_OPTION)
+         return;  
+      File selectedFile = fileDialog.getSelectedFile();
+      BufferedReader in;
+      try {
+         FileReader stream = new FileReader(selectedFile);
+         in = new BufferedReader( stream );
+      }
+      catch (Exception e) {
+         JOptionPane.showMessageDialog(this,
+               "an error occurred while trying to open the file:\n" + e);
+         return;
+      }
+      try {
+         StringBuffer input = new StringBuffer();
+         while (true) {
+            String lineFromFile = in.readLine();
+            if (lineFromFile == null)
+               break; 
+            input.append(lineFromFile);
+            input.append('\n');
+            if (input.length() > 10000)
+               throw new IOException("Input file is too large.");
+         }
+         in.close();
+         text.setText(input.toString());
+         editFile = selectedFile;
+         setTitle("Text Editor: " + editFile.getName());
+      }
+      catch (Exception e) {
+         JOptionPane.showMessageDialog(this,
+               "an error occurred while trying to read the data:\n" + e);
+      }   
+   }
+
+
+   
+   private void doQuit() {
+      System.exit(0);
+   }
+
+
+
+
+public void actionPerformed(ActionEvent e) {
+	
+	if(e.getSource()==boldMenu){
+		text.setFont(new Font("Serif", Font.BOLD,12));
+	}
+if(e.getSource()==italicMenu){
+	text.setFont(new Font("Serif", Font.ITALIC,12));
+	}
+}
+  
+
+} 
